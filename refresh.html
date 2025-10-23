@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Silent Refresh</title>
+</head>
+<body>
+    <script type="module">
+        import { UserManager } from './node_modules/oidc-client-ts/dist/browser/oidc-client-ts.js';
+        
+        new UserManager({
+            response_mode: 'query'
+        }).signinSilentCallback()
+            .catch(err => {
+                console.error('Silent refresh error:', err);
+            });
+    </script>
+</body>
+</html>
