@@ -1,6 +1,6 @@
 # React OIDC Application
 
-A React application with OpenID Connect (OIDC) authentication using the `openid-client` library.
+A React application with OpenID Connect (OIDC) authentication using the `oidc-client-ts` library.
 
 ## Features
 
