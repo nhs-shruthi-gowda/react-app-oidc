@@ -11,3 +11,8 @@ interface ImportMeta {
   readonly env: ImportMetaEnv
 }
 
+// Allow importing files as raw strings
+declare module '*.pem?raw' {
+  const content: string;
+  export default content;
+}

@@ -15,6 +15,7 @@ export interface IDTokenClaims {
 
 export interface OIDCUser extends User {
     profile?: IDTokenClaims;
+    access_token?: string;
 }
 
 export interface OIDCContextType {
@@ -24,5 +25,6 @@ export interface OIDCContextType {
     login: () => Promise<void>;
     logout: () => Promise<void>;
     refreshToken: () => Promise<void>;
+    fetchUserInfo: () => Promise<any>;
     isAuthenticated: boolean;
 }

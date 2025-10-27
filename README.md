@@ -83,3 +83,5 @@ To run the mock server:
 oidc-provider-mock
 ``` 
 Enable the metadata in oidsConfig.ts for a local server
+
+Add your private key into privateKey.ts for a local server

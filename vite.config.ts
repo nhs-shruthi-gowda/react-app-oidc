@@ -6,34 +6,45 @@ export default defineConfig({
     server: {
         port: 8000,
         open: true,
+        fs: {
+            // Allow serving files from the workspace root
+            allow: [
+                '/Users/shruthigowda/Projects/FTRS/oidc/react-app-react-oidc'
+            ]
+        },
         proxy: {
-            '/.well-known': {
-                target: 'http://localhost:9400',
+            // Proxy NHS Identity endpoints to avoid CORS
+            '/openam': {
+                target: 'https://am.nhsint.auth-ptl.cis2.spineservices.nhs.uk:443',
                 changeOrigin: true,
                 secure: false,
+                rewrite: (path: string) => path,
             },
-            '/oauth2': {
-                target: 'http://localhost:9400',
+            '/.well-known': {
+                target: 'https://am.nhsint.auth-ptl.cis2.spineservices.nhs.uk:443',
                 changeOrigin: true,
                 secure: false,
             },
             '/authorize': {
-                target: 'http://localhost:9400',
+                target: 'https://am.nhsint.auth-ptl.cis2.spineservices.nhs.uk:443/openam/oauth2/realms/root/realms/NHSIdentity/realms/Healthcare',
                 changeOrigin: true,
                 secure: false,
+                rewrite: (path: string) => path.replace(/^\/authorize/, '/authorize'),
             },
-            '/token': {
-                target: 'http://localhost:9400',
+            '/access_token': {
+                target: 'https://am.nhsint.auth-ptl.cis2.spineservices.nhs.uk:443/openam/oauth2/realms/root/realms/NHSIdentity/realms/Healthcare',
                 changeOrigin: true,
                 secure: false,
+                rewrite: (path: string) => path.replace(/^\/access_token/, '/access_token'),
             },
             '/userinfo': {
-                target: 'http://localhost:9400',
+                target: 'https://am.nhsint.auth-ptl.cis2.spineservices.nhs.uk:443/openam/oauth2/realms/root/realms/NHSIdentity/realms/Healthcare',
                 changeOrigin: true,
                 secure: false,
+                rewrite: (path: string) => path.replace(/^\/userinfo/, '/userinfo'),
             },
-            '/jwks': {
-                target: 'http://localhost:9400',
+            '/connect': {
+                target: 'https://am.nhsint.auth-ptl.cis2.spineservices.nhs.uk:443/openam/oauth2/realms/root/realms/NHSIdentity/realms/Healthcare',
                 changeOrigin: true,
                 secure: false,
             }

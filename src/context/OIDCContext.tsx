@@ -6,9 +6,10 @@ import React, {
     useCallback,
     ReactNode
 } from 'react';
-import { User, UserLoadedEvent, UserUnloadedEvent } from 'oidc-client-ts';
-import { userManager } from '../config/oidsConfig';
+import { User, UserLoadedEvent } from 'oidc-client-ts';
+import { userManager, initializeOIDC } from '../config/oidsConfig';
 import { OIDCContextType, OIDCUser } from '../types/oidc';
+import { fetchUserInfo as fetchUserInfoUtil, getUserinfoEndpoint } from '../utils/userInfoUtils';
 
 const OIDCContext = createContext<OIDCContextType | undefined>(undefined);
 
@@ -20,8 +21,27 @@ export function OIDCProvider({ children }: OIDCProviderProps): JSX.Element {
     const [user, setUser] = useState<OIDCUser | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
+    const [initialized, setInitialized] = useState<boolean>(false);
 
     useEffect(() => {
+        const init = async () => {
+            try {
+                // Wait for OIDC configuration to initialize
+                await initializeOIDC();
+                setInitialized(true);
+            } catch (err) {
+                console.error('Failed to initialize OIDC:', err);
+                setError('Failed to initialize authentication');
+                setLoading(false);
+            }
+        };
+
+        init();
+    }, []);
+
+    useEffect(() => {
+        if (!initialized) return;
+
         const checkUser = async (): Promise<void> => {
             try {
                 const currentUser = await userManager.getUser() as OIDCUser | null;
@@ -80,7 +100,7 @@ export function OIDCProvider({ children }: OIDCProviderProps): JSX.Element {
             unsubscribeAccessTokenExpiring();
             unsubscribeSigninCallback();
         };
-    }, []);
+    }, [initialized]);
 
     const login = useCallback(async (): Promise<void> => {
         try {
@@ -116,6 +136,32 @@ export function OIDCProvider({ children }: OIDCProviderProps): JSX.Element {
             setError(`Token refresh failed: ${errorMessage}`);
         }
     }, []);
+    const fetchUserInfo = useCallback(async (): Promise<any> => {
+        if (!user || !user.access_token) {
+            throw new Error('No access token available. Please login first.');
+        }
+
+        try {
+            const isDevelopment = import.meta.env.DEV;
+            const userinfoEndpoint = getUserinfoEndpoint(isDevelopment);
+
+            console.log('📥 Fetching user info with access token...');
+            const userInfo = await fetchUserInfoUtil(userinfoEndpoint, user.access_token);
+
+            console.log('✅ User info fetched successfully:', userInfo);
+
+            // Note: We don't update the user object in storage here
+            // as it requires proper User instance creation
+            // The fetched info is returned for use in components
+
+            return userInfo;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to fetch user info';
+            console.error('Error fetching user info:', errorMessage);
+            setError(errorMessage);
+            throw err;
+        }
+    }, [user]);
 
     const isAuthenticated = user !== null;
 
@@ -126,6 +172,7 @@ export function OIDCProvider({ children }: OIDCProviderProps): JSX.Element {
         login,
         logout,
         refreshToken,
+        fetchUserInfo,
         isAuthenticated
     };
 

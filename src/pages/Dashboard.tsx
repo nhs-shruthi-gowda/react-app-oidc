@@ -1,11 +1,26 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useOIDC } from '../context/OIDCContext';
 import { decodeToken } from '../utils/tokenUtils';
-import { LogOut, RefreshCw, User } from "lucide-react";
+import { LogOut, RefreshCw, User, UserCheck } from "lucide-react";
 import { IDTokenClaims } from '../types/oidc';
 
 export default function Dashboard(): JSX.Element {
-    const { user, loading, error, logout, refreshToken } = useOIDC();
+    const { user, loading, error, logout, refreshToken, fetchUserInfo } = useOIDC();
+    const [userInfo, setUserInfo] = useState<any>(null);
+    const [fetchingUserInfo, setFetchingUserInfo] = useState(false);
+
+    const handleFetchUserInfo = async () => {
+        setFetchingUserInfo(true);
+        try {
+            const info = await fetchUserInfo();
+            setUserInfo(info);
+            console.log('User info fetched:', info);
+        } catch (err) {
+            console.error('Failed to fetch user info:', err);
+        } finally {
+            setFetchingUserInfo(false);
+        }
+    };
 
     if (loading) {
         return <div className="text-center text-white mt-20">Loading...</div>;
@@ -117,8 +132,30 @@ export default function Dashboard(): JSX.Element {
                         </div>
                     )}
 
+                    {/* Fetched User Info */}
+                    {userInfo && (
+                        <div className="lg:col-span-2 bg-slate-800/40 backdrop-blur rounded-lg border border-green-500/20 p-6">
+                            <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                                <UserCheck size={24} className="text-green-400" />
+                                User Info from Userinfo Endpoint
+                            </h2>
+                            <pre className="bg-slate-900/60 p-4 rounded border border-slate-700/50 text-xs text-slate-300 overflow-auto max-h-64">
+                {JSON.stringify(userInfo, null, 2)}
+              </pre>
+                        </div>
+                    )}
+
                     {/* Actions */}
                     <div className="lg:col-span-2 flex gap-3">
+                        <button
+                            onClick={handleFetchUserInfo}
+                            disabled={fetchingUserInfo}
+                            className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white font-semibold py-3 rounded transition flex items-center justify-center gap-2"
+                        >
+                            <UserCheck size={18} />
+                            {fetchingUserInfo ? 'Fetching...' : 'Fetch User Info'}
+                        </button>
+
                         <button
                             onClick={refreshToken}
                             className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded transition flex items-center justify-center gap-2"
